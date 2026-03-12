@@ -30,102 +30,103 @@
 
 ```mermaid
 graph TB
-    subgraph Client["🌐 Browser (Client)"]
+    subgraph Client["Browser Client"]
         UI["HTML / Bootstrap UI"]
-        JS["Vanilla JS\n(history, calendar, flashcards)"]
+        JS["Vanilla JS - history, calendar, flashcards"]
     end
 
-    subgraph Flask["🐍 Flask Backend (main.py)"]
-        Auth["Auth Layer\n/login  /register  /successful"]
-        PDF["PDF Pipeline\n/pdf"]
-        YT["YouTube Pipeline\n/youtube"]
-        FC["Flashcard Engine\n/generate_flashcards\n/generate_study_flashcards\n/submit_flashcards"]
-        Hist["History API\n/history  /history/<id>"]
-        Metrics["Quality Metrics\nROUGE · Cosine · Flesch"]
+    subgraph Server["Flask Backend - main.py"]
+        Auth["Auth - /login /register /successful"]
+        PDF["PDF Pipeline - /pdf"]
+        YT["YouTube Pipeline - /youtube"]
+        FC["Flashcard Engine - /generate_flashcards /submit_flashcards"]
+        Hist["History API - /history"]
+        Metrics["Quality Metrics - ROUGE, Cosine, Flesch"]
     end
 
-    subgraph Storage["💾 Storage"]
-        DB[("SQLite DB\nusers · history")]
-        FS["File System\nuploads/  static/audio/"]
+    subgraph Storage["Storage Layer"]
+        DB[("SQLite DB - users, history")]
+        FS["File System - uploads, static/audio"]
     end
 
-    subgraph ExternalAPIs["☁️ External APIs"]
-        Groq["Groq Cloud\nLLaMA 3.1-8b-instant\nWhisper-large-v3"]
-        gTTS["Google TTS\ngTTS"]
-        YTA["YouTube Transcript API\n+ yt-dlp fallback"]
+    subgraph ExternalAPIs["External APIs"]
+        Groq["Groq Cloud - LLaMA 3.1-8b + Whisper-large-v3"]
+        GTTS["Google TTS - gTTS"]
+        YTA["YouTube Transcript API + yt-dlp fallback"]
     end
 
-    subgraph PDFProc["📄 PDF Processing"]
-        pdfplumber["pdfplumber\n(text PDFs)"]
-        OCR["pytesseract + pdf2image\n(scanned PDFs)"]
+    subgraph PDFProc["PDF Processing"]
+        pdfplumber["pdfplumber - text PDFs"]
+        OCR["pytesseract + pdf2image - scanned PDFs"]
     end
 
-    UI -->|HTTP requests| Flask
-    JS -->|fetch()| Hist
-    JS -->|fetch()| FC
+    UI -->|HTTP requests| Server
+    JS -->|fetch history| Hist
+    JS -->|fetch flashcards| FC
 
     Auth -->|read/write| DB
+
     PDF --> pdfplumber
     PDF --> OCR
     pdfplumber --> Groq
     OCR --> Groq
-    PDF --> gTTS
+    PDF --> GTTS
     PDF --> Metrics
-    PDF -->|save result| DB
+    PDF -->|save summary| DB
     PDF -->|save audio| FS
 
     YT --> YTA
-    YTA -->|transcript| Groq
-    YT --> gTTS
+    YTA -->|transcript text| Groq
+    YT --> GTTS
     YT --> Metrics
-    YT -->|save result| DB
+    YT -->|save summary| DB
     YT -->|save audio| FS
 
     Groq -->|summary text| FC
-    FC -->|MCQs + cards| DB
+    FC -->|MCQs and cards| DB
 
     Hist --> DB
 ```
 
 ---
 
-### Data Flow — PDF Summarization Pipeline
+### Data Flow — PDF Summarization
 
 ```mermaid
 sequenceDiagram
-    participant U as 👤 User
+    participant U as User
     participant F as Flask /pdf
-    participant E as extract_text()
+    participant E as extract_text
     participant G as Groq LLM
     participant M as Metrics Engine
     participant T as gTTS
     participant DB as SQLite DB
 
     U->>F: Upload PDF file
-    F->>E: Extract text (pdfplumber)
-    alt Text too short (<50 chars)
-        E->>E: OCR fallback (pytesseract)
+    F->>E: Extract text via pdfplumber
+    alt Text too short (under 50 chars)
+        E->>E: OCR fallback via pytesseract
     end
     E-->>F: Raw text
-    F->>G: Summarize (llama-3.1-8b-instant)
-    G-->>F: 400–500 word summary
+    F->>G: Summarize with llama-3.1-8b-instant
+    G-->>F: 400 to 500 word summary
     F->>M: Evaluate quality metrics
-    M-->>F: ROUGE / Cosine / Readability scores
+    M-->>F: ROUGE, Cosine, Readability scores
     F->>T: Generate audio MP3
-    T-->>F: audio filename
-    F->>DB: Save to History
-    F->>G: Generate 10 MCQs + 8 flashcards
+    T-->>F: Audio filename
+    F->>DB: Save summary to History
+    F->>G: Generate 10 MCQs and 8 flashcards
     G-->>F: JSON flashcards
-    F-->>U: Render result.html (summary + metrics + quiz)
+    F-->>U: Render result page with summary, metrics, quiz
 ```
 
 ---
 
-### Data Flow — YouTube Summarization Pipeline
+### Data Flow — YouTube Summarization
 
 ```mermaid
 sequenceDiagram
-    participant U as 👤 User
+    participant U as User
     participant F as Flask /youtube
     participant YT as YouTube Transcript API
     participant YD as yt-dlp + Whisper ASR
@@ -135,23 +136,23 @@ sequenceDiagram
     participant DB as SQLite DB
 
     U->>F: Paste YouTube URL
-    F->>YT: Fetch transcript (captions)
+    F->>YT: Fetch transcript from captions
     alt No captions available
-        F->>YD: Download audio
+        F->>YD: Download audio with yt-dlp
         YD->>G: Transcribe via Whisper-large-v3
         G-->>F: Raw transcript text
     end
     YT-->>F: Transcript text
-    F->>G: Summarize (llama-3.1-8b-instant)
-    G-->>F: 400–500 word summary
+    F->>G: Summarize with llama-3.1-8b-instant
+    G-->>F: 400 to 500 word summary
     F->>M: Evaluate quality metrics
-    M-->>F: ROUGE / Cosine / Readability scores
+    M-->>F: ROUGE, Cosine, Readability scores
     F->>T: Generate audio MP3
-    T-->>F: audio filename
-    F->>DB: Save to History
-    F->>G: Generate 10 MCQs + 8 flashcards
+    T-->>F: Audio filename
+    F->>DB: Save summary to History
+    F->>G: Generate 10 MCQs and 8 flashcards
     G-->>F: JSON flashcards
-    F-->>U: Render result.html (summary + metrics + quiz)
+    F-->>U: Render result page with summary, metrics, quiz
 ```
 
 ---
