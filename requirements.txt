@@ -1,0 +1,13 @@
+requests
+Flask==3.1.0
+pdfplumber==0.11.4
+pytesseract==0.3.13
+pdf2image
+groq==0.13.0
+youtube_transcript_api==0.6.2
+yt_dlp==2024.11.18
+scikit-learn==1.6.0
+rouge_score==0.1.2
+flask-sqlalchemy==3.1.1
+werkzeug
+gtts

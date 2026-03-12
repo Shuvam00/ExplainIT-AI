@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Summarization Result - ExplainIT AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      position: relative;
+      padding-bottom: 60px;
+    }
+
+    /* Enhanced decorative elements */
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    body::before {
+      width: 200px;
+      height: 200px;
+      top: 10%;
+      left: 5%;
+    }
+
+    body::after {
+      width: 150px;
+      height: 150px;
+      top: 60%;
+      right: 8%;
+      animation-delay: 3s;
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 1rem 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .navbar-brand {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 1.8rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .flashcard-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .flashcard {
+      perspective: 1000px;
+      height: 250px;
+      cursor: pointer;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .flashcard.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 15px;
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .flashcard-front {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .flashcard-back {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      transform: rotateY(180deg);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .flashcard-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+      <a href="" class="navbar-brand">📚 ExplainIT AI</a>
+    </div>
+  </nav>
+
+  <div class="container mx-auto py-5 px-4">
+    <!-- Title -->
+    <h1 class="text-center mb-4" style="font-size: 2rem;">
+      Summarization Result
+    </h1>
+
+    <!-- Summary Card -->
+    <div class="card rounded-4 p-4 mb-4">
+      <h2 class="mb-3" style="color: #667eea; font-weight: 600;">📌 Output</h2>
+
+      <!-- Render as safe HTML (can include bold, headings, etc.) -->
+      <div style="white-space: pre-line;">
+        {{ summary | safe }}
+      </div>
+
+      {% if audio %}
+      <!-- Audio Player -->
+      <div class="mt-4">
+        <h3 class="mb-2" style="color: #667eea; font-weight: 600;">🔊 Listen to Summary</h3>
+        <audio controls class="w-100">
+          <source src="{{ url_for('static', filename='audio/' + audio) }}" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Attend Quiz Button -->
+    {% if flashcards %}
+    <div class="text-center mt-3 d-flex gap-3 justify-content-center">
+      <button type="button" class="btn btn-success rounded-3 px-4 py-2" id="attendQuizBtn">📚 Attend Quiz</button>
+      <button type="button" class="btn btn-info rounded-3 px-4 py-2" id="generateFlashcardsBtn">🎯 Generate
+        Flashcards</button>
+    </div>
+    {% endif %}
+
+    {% if flashcards %}
+    <!-- Flashcards Section -->
+    <div class="card rounded-4 p-4 mt-4" style="background: rgba(255, 255, 255, 0.9); display: none;"
+      id="flashcardsSection">
+      <h2 class="mb-3" style="color: #667eea; font-weight: 600; font-size: 1.25rem;">📚 Flashcards Quiz</h2>
+
+      {% if flashcards.mcqs %}
+      <h4 class="mb-3">Quiz - Answer all questions</h4>
+      <form id="quizForm">
+        {% for mcq in flashcards.mcqs %}
+        {% set mcq_index = loop.index0 %}
+        <div class="mb-3">
+          <p><strong>Q{{ loop.index }}:</strong> {{ mcq.question }}</p>
+          {% for option in mcq.options %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="mcq_{{ mcq_index }}" value="{{ option.split(')')[0] }}"
+              id="mcq_{{ mcq_index }}_{{ option.split(')')[0] }}">
+            <label class="form-check-label" for="mcq_{{ mcq_index }}_{{ option.split(')')[0] }}">{{ option }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+
+
+      </form>
+
+      <div class="text-center mt-3">
+        <button type="button" class="btn btn-success" id="submitQuiz">Submit Quiz</button>
+      </div>
+
+      <div id="quizResult" class="mt-3" style="display: none;">
+        <h5 class="text-center" style="color: #667eea;">Quiz Result</h5>
+        <p class="text-center" id="scoreDisplay"></p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Study Flashcards Section -->
+    <div class="card rounded-4 p-4 mt-4" style="background: rgba(255, 255, 255, 0.9); display: none;"
+      id="flashcardsStudySection">
+      <h2 class="mb-3 text-center" style="color: #667eea; font-weight: 600; font-size: 1.25rem;">🎯 Study Flashcards
+      </h2>
+      <p class="text-center text-muted mb-4">Click on any card to flip and see the answer</p>
+      <div id="flashcardContainer" class="flashcard-container">
+        <!-- Flashcards will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-3">
+      <a href="/starter" class="btn btn-primary rounded-3 px-4 py-2">
+        ⬅ Back to Home
+      </a>
+    </div>
+
+    {% if metrics %}
+    <div class="card rounded-4 p-4 mt-4" style="background: rgba(255, 255, 255, 0.9);">
+      <h2 class="mb-3" style="color: #667eea; font-weight: 600; font-size: 1.25rem;">📊 Validation Metrics</h2>
+
+      <div class="row text-center">
+        <div class="col-md-3">
+          <p class="text-muted">ROUGE-1</p>
+          <p class="h5" style="color: #667eea;">{{ metrics.rouge1 }}</p>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">ROUGE-2</p>
+          <p class="h5" style="color: #667eea;">{{ metrics.rouge2 }}</p>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">ROUGE-L</p>
+          <p class="h5" style="color: #667eea;">{{ metrics.rougeL }}</p>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">Cosine Similarity</p>
+          <p class="h5" style="color: #667eea;">{{ metrics.cosine }}</p>
+        </div>
+      </div>
+
+      <!-- New Quality Metrics Section -->
+      <hr class="my-4">
+      <h3 class="mb-3" style="color: #667eea; font-weight: 600; font-size: 1.1rem;">✨ Quality Metrics</h3>
+
+      <div class="row text-center">
+        <div class="col-md-3">
+          <p class="text-muted">Readability</p>
+          <p class="h5" style="color: #11998e;">{{ metrics.readability }}</p>
+          <small class="text-muted">
+            {% if metrics.readability >= 60 %}
+            Easy to read
+            {% elif metrics.readability >= 30 %}
+            Standard
+            {% else %}
+            Advanced
+            {% endif %}
+          </small>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">Key Terms</p>
+          <p class="h5" style="color: #11998e;">{{ metrics.entity_preservation }}%</p>
+          <small class="text-muted">Concepts retained</small>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">Sentences</p>
+          <p class="h5" style="color: #11998e;">{{ metrics.sentence_count }}</p>
+          <small class="text-muted">Total count</small>
+        </div>
+        <div class="col-md-3">
+          <p class="text-muted">Avg Length</p>
+          <p class="h5" style="color: #11998e;">{{ metrics.avg_sentence_length }}</p>
+          <small class="text-muted">Words/sentence</small>
+        </div>
+      </div>
+
+      <div class="mt-4 text-center">
+        <h3 class="h6" style="color: #11998e;">Overall Quality Score</h3>
+        <div class="w-100 bg-light rounded-pill" style="height: 16px; margin-top: 8px;">
+          <div class="bg-success rounded-pill" style="height: 16px; width: {{ metrics.overall * 10 }}%"></div>
+        </div>
+        <p class="mt-2 text-muted">{{ metrics.overall }}/10</p>
+      </div>
+    </div>
+
+    <h2 class="mt-4 mb-3" style="color: #667eea; font-weight: 600; font-size: 1.25rem;">Summary Metrics</h2>
+    <canvas id="metricsChart" width="400" height="200"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const ctx = document.getElementById('metricsChart');
+      const metricsData = {{ metrics| tojson }};
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['ROUGE-1', 'ROUGE-2', 'ROUGE-L', 'Cosine', 'Overall'],
+          datasets: [{
+            label: 'Evaluation Scores',
+            data: [metricsData.rouge1, metricsData.rouge2, metricsData.rougeL, metricsData.cosine, metricsData.overall],
+            borderWidth: 2,
+            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#11998e', '#28a745']
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 10
+            }
+          }
+        }
+      });
+    </script>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const attendQuizBtn = document.getElementById('attendQuizBtn');
+      const flashcardsSection = document.getElementById('flashcardsSection');
+      const submitQuizBtn = document.getElementById('submitQuiz');
+
+      if (attendQuizBtn) {
+        attendQuizBtn.addEventListener('click', function () {
+          flashcardsSection.style.display = 'block';
+          attendQuizBtn.style.display = 'none';
+        });
+      }
+
+      if (submitQuizBtn) {
+        submitQuizBtn.addEventListener('click', function () {
+          const form = document.getElementById('quizForm');
+          const formData = new FormData(form);
+
+          const mcq_answers = {};
+
+          for (let [key, value] of formData.entries()) {
+            if (key.startsWith('mcq_')) {
+              const index = key.split('_')[1];
+              mcq_answers[index] = value;
+            }
+          }
+
+          fetch('/submit_flashcards', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              mcq_answers: mcq_answers
+            })
+          })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+              const quizResultDiv = document.getElementById('quizResult');
+              const scoreDisplay = document.getElementById('scoreDisplay');
+              scoreDisplay.textContent = 'Your score: ' + data.score + '/' + data.total;
+              quizResultDiv.style.display = 'block';
+            })
+            .catch(function (error) {
+              console.error('Error:', error);
+              alert('Error submitting quiz.');
+            });
+        });
+      }
+
+      // Flashcard functionality
+      const generateFlashcardsBtn = document.getElementById('generateFlashcardsBtn');
+      const flashcardsStudySection = document.getElementById('flashcardsStudySection');
+      const flashcardContainer = document.getElementById('flashcardContainer');
+
+      if (generateFlashcardsBtn) {
+        generateFlashcardsBtn.addEventListener('click', function () {
+          generateFlashcardsBtn.disabled = true;
+          generateFlashcardsBtn.textContent = '⏳ Generating...';
+
+          const summary = {{ summary| tojson
+        }};
+
+      fetch('/generate_study_flashcards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ summary: summary })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert('Error generating flashcards: ' + data.error);
+            return;
+          }
+
+          flashcardContainer.innerHTML = '';
+
+          data.cards.forEach((card, index) => {
+            const flashcardDiv = document.createElement('div');
+            flashcardDiv.className = 'flashcard';
+            flashcardDiv.innerHTML = `
+                <div class="flashcard-inner">
+                  <div class="flashcard-front">
+                    <div>
+                      <div>${card.question}</div>
+                      <div class="flashcard-hint">Click to flip</div>
+                    </div>
+                  </div>
+                  <div class="flashcard-back">
+                    <div>${card.answer}</div>
+                  </div>
+                </div>
+              `;
+
+            flashcardDiv.addEventListener('click', function () {
+              this.classList.toggle('flipped');
+            });
+
+            flashcardContainer.appendChild(flashcardDiv);
+          });
+
+          flashcardsStudySection.style.display = 'block';
+          flashcardsStudySection.scrollIntoView({ behavior: 'smooth' });
+
+          generateFlashcardsBtn.disabled = false;
+          generateFlashcardsBtn.textContent = '🎯 Generate Flashcards';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error generating flashcards.');
+          generateFlashcardsBtn.disabled = false;
+          generateFlashcardsBtn.textContent = '🎯 Generate Flashcards';
+        });
+    });
+      }
+    });
+  </script>
+</body>
+
+</html>

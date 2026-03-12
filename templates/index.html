@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExplainIT AI - Smart Summarization</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-main);
+    }
+
+    /* Animated background elements */
+    body::before,
+    body::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: -1;
+    }
+
+    body::before {
+      width: 400px;
+      height: 400px;
+      background: rgba(99, 102, 241, 0.4);
+      top: -100px;
+      left: -100px;
+      animation: float 10s infinite alternate;
+    }
+
+    body::after {
+      width: 300px;
+      height: 300px;
+      background: rgba(236, 72, 153, 0.4);
+      bottom: -50px;
+      right: -50px;
+      animation: float 12s infinite alternate-reverse;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translate(0, 0);
+      }
+
+      100% {
+        transform: translate(30px, 50px);
+      }
+    }
+
+    /* Main Glass Container */
+    .glass-container {
+      width: 95vw;
+      height: 92vh;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar (Left) */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: rgba(255, 255, 255, 0.5);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      overflow-y: hidden;
+      /* Header fixed, list scrolls */
+    }
+
+    .logo-container {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-label {
+      padding: 20px 24px 10px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ROBUST HISTORY LIST */
+    #historyList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      border: 1px solid transparent;
+
+      /* Robust Text Wrapping */
+      word-wrap: break-word;
+      word-break: break-word;
+      /* Changed from break-all for better readability */
+      white-space: normal;
+      overflow: hidden;
+    }
+
+    .history-item:hover {
+      background: white;
+      border-color: rgba(99, 102, 241, 0.2);
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .history-item div {
+      /* Ensure inner div inherits wrapping */
+      word-wrap: break-word;
+      white-space: normal;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .top-bar {
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.3);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .page-title h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      background: white;
+      color: var(--text-muted);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-2px);
+      color: var(--primary);
+    }
+
+    .profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 6px 6px 16px;
+      background: white;
+      border-radius: 50px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+
+    .content-scroll {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    /* Cards */
+    .feature-card {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .feature-card.gradient-purple {
+      background: linear-gradient(135deg, rgba(239, 230, 253, 0.7) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    .feature-card.gradient-pink {
+      background: linear-gradient(135deg, rgba(253, 227, 237, 0.7) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    .card-icon {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .card-content {
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Form Elements */
+    .glass-input {
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 12px 20px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .glass-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      outline: none;
+    }
+
+    .btn-gradient {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+      transition: all 0.3s;
+    }
+
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
+      color: white;
+    }
+
+    /* Right Sidebar (Widgets) */
+    .right-sidebar {
+      width: 320px;
+      /* Wider for better calendar fit */
+      min-width: 320px;
+      border-left: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.3);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      overflow-y: auto;
+    }
+
+    .widget-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Calendar - Minimalist */
+    .calendar-container {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    .day-label {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+    }
+
+    .day {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .day:hover {
+      background: #f3f4f6;
+    }
+
+    .day.current {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+    }
+
+    /* ROBUST TO-DO LIST */
+    .todo-container {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      max-height: 500px;
+      /* Prevent container from growing too large */
+    }
+
+    .add-todo-box {
+      margin-bottom: 20px;
+    }
+
+    #todo-list {
+      flex: 1;
+      max-height: 300px;
+      /* SCROLLABLE HEIGHT */
+      overflow-y: auto;
+      padding-right: 5px;
+
+      /* Robust Wrapping */
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      /* Important for multi-line text */
+      gap: 12px;
+      padding: 12px 10px;
+      border-bottom: 1px solid #f1f5f9;
+
+      /* Wrapping */
+      word-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .right-sidebar {
+        display: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .glass-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glass-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <div class="brand">
+          <i class="fas fa-layer-group"></i> ExplainIT
+        </div>
+      </div>
+
+      <div class="nav-label">Overview</div>
+      <div class="d-flex flex-column gap-2 px-3">
+        <div class="history-item text-center" style="background: var(--primary); color: white;"
+          onclick="window.location.href='/starter'">
+          <i class="fas fa-home me-2"></i> Dashboard
+        </div>
+      </div>
+
+      <div class="nav-label">Recent History</div>
+      <div id="historyList">
+        <!-- JS Populated -->
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h1>My Learning Space</h1>
+        </div>
+        <div class="user-actions">
+          <button class="icon-btn"><i class="fas fa-search"></i></button>
+          <button class="icon-btn"><i class="fas fa-bell"></i></button>
+          <div class="profile-pill">
+            <div class="user-name">{{ user_name.split('@')[0] if user_name else 'Student' }}</div>
+            <div class="avatar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-scroll">
+        <!-- PDF Card -->
+        <div class="feature-card gradient-purple">
+          <div class="card-icon">
+            <i class="fas fa-file-pdf" style="color: var(--secondary);"></i>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">PDF Analysis</h3>
+            <p class="card-desc">Instantly extract key insights and summaries from your course documents.</p>
+            <form method="POST" action="/pdf" enctype="multipart/form-data">
+              <div class="d-flex gap-3">
+                <input type="file" name="file" accept=".pdf" class="form-control glass-input" required>
+                <button type="submit" class="btn-gradient">Summarize</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- YouTube Card -->
+        <div class="feature-card gradient-pink">
+          <div class="card-icon">
+            <i class="fab fa-youtube" style="color: var(--accent);"></i>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Video Summarization</h3>
+            <p class="card-desc">Paste a URL to get a comprehensive breakdown of educational videos.</p>
+            <form method="POST" action="/youtube">
+              <div class="d-flex gap-3">
+                <input type="text" name="youtube_url" placeholder="Paste YouTube URL here..."
+                  class="form-control glass-input" required>
+                <button type="submit" class="btn-gradient">Summarize</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Widgets -->
+    <aside class="right-sidebar">
+      <!-- Calendar -->
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <h3 class="widget-title mb-0" id="calendarTitle"></h3>
+          <div class="d-flex gap-2">
+            <button class="icon-btn" style="width: 32px; height: 32px;" id="calPrev"><i
+                class="fas fa-chevron-left"></i></button>
+            <button class="icon-btn" style="width: 32px; height: 32px;" id="calNext"><i
+                class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+          <!-- JS Populated -->
+        </div>
+      </div>
+
+      <!-- To-Do List -->
+      <div class="todo-container">
+        <h3 class="widget-title">To-Do List</h3>
+        <div class="add-todo-box">
+          <input type="text" id="todo-title" placeholder="New task..." class="form-control glass-input mb-2">
+          <div class="d-flex gap-2">
+            <input type="date" id="todo-date" class="form-control glass-input">
+            <input type="time" id="todo-time" class="form-control glass-input">
+          </div>
+          <button id="add-todo-btn" class="btn-gradient w-100 mt-2">Add</button>
+        </div>
+        <div id="todo-list">
+          <!-- JS Populated -->
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // HISTORY LOGIC
+    const historyList = document.getElementById('historyList');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHistory();
+      renderTodos(); // Ensure this is called
+    });
+
+    function loadHistory() {
+      fetch('/history')
+        .then(response => response.json())
+        .then(data => {
+          displayHistory(data.history);
+        })
+        .catch(err => console.error('Error loading history:', err));
+    }
+
+    function displayHistory(historyItems) {
+      historyList.innerHTML = '';
+      if (historyItems.length === 0) {
+        historyList.innerHTML = '<div class="text-center p-3 text-muted">No history yet</div>';
+        return;
+      }
+
+      historyItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <div style="font-weight: 500;"><i class="fas fa-file-alt me-2 text-primary"></i> ${item.title}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">${item.timestamp || 'Just now'}</div>
+        `;
+        div.addEventListener('click', () => window.location.href = `/history/${item.id}`);
+        historyList.appendChild(div);
+      });
+    }
+
+    // TO-DO LOGIC
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+    function renderTodos() {
+      const todoList = document.getElementById('todo-list');
+      todoList.innerHTML = '';
+
+      if (todos.length === 0) {
+        todoList.innerHTML = '<div class="text-center p-4 text-muted">No tasks for today 🎉</div>';
+        return;
+      }
+
+      todos.forEach((todo, index) => {
+        const item = document.createElement('div');
+        item.className = 'todo-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = todo.completed;
+        checkbox.className = 'form-check-input mt-1';
+        checkbox.addEventListener('change', () => toggleTodo(index));
+
+        const content = document.createElement('div');
+        content.style.flex = '1';
+
+        const title = document.createElement('div');
+        title.textContent = todo.title;
+        title.style.fontWeight = '600';
+        title.style.color = todo.completed ? '#aaa' : 'var(--text-main)';
+        title.style.textDecoration = todo.completed ? 'line-through' : 'none';
+
+        const time = document.createElement('div');
+        time.textContent = `${todo.date} ${todo.time}`;
+        time.style.fontSize = '0.75rem';
+        time.style.color = 'var(--text-muted)';
+
+        content.appendChild(title);
+        content.appendChild(time);
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '<i class="fas fa-times"></i>';
+        delBtn.style.background = 'none';
+        delBtn.style.border = 'none';
+        delBtn.style.color = '#ff6b6b';
+        delBtn.style.opacity = '0.6';
+        delBtn.onclick = () => deleteTodo(index);
+
+        item.appendChild(checkbox);
+        item.appendChild(content);
+        item.appendChild(delBtn);
+
+        todoList.appendChild(item);
+      });
+    }
+
+    function toggleTodo(index) {
+      todos[index].completed = !todos[index].completed;
+      saveTodos();
+      renderTodos();
+    }
+
+    function deleteTodo(index) {
+      todos.splice(index, 1);
+      saveTodos();
+      renderTodos();
+    }
+
+    function saveTodos() {
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+
+    document.getElementById('add-todo-btn').addEventListener('click', () => {
+      const title = document.getElementById('todo-title').value;
+      const date = document.getElementById('todo-date').value;
+      const time = document.getElementById('todo-time').value;
+
+      if (title && date && time) {
+        todos.push({ title, date, time, completed: false });
+        saveTodos();
+        renderTodos();
+        // Clear inputs
+        document.getElementById('todo-title').value = '';
+      }
+    });
+
+    // DYNAMIC CALENDAR LOGIC
+    const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    let calYear, calMonth;
+
+    function initCalendar() {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth(); // 0-indexed
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const title = document.getElementById('calendarTitle');
+      const grid = document.getElementById('calendarGrid');
+      title.textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+
+      grid.innerHTML = '';
+
+      // Day-of-week headers (Mon–Sun)
+      DAY_LABELS.forEach(label => {
+        const d = document.createElement('div');
+        d.className = 'day-label';
+        d.textContent = label;
+        grid.appendChild(d);
+      });
+
+      const today = new Date();
+      const firstDay = new Date(calYear, calMonth, 1);
+      // getDay(): 0=Sun…6=Sat. Convert to Mon=0 offset.
+      let startOffset = (firstDay.getDay() + 6) % 7;
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+      // Trailing days from previous month
+      for (let i = startOffset - 1; i >= 0; i--) {
+        const d = document.createElement('div');
+        d.className = 'day text-muted';
+        d.textContent = daysInPrev - i;
+        grid.appendChild(d);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = document.createElement('div');
+        const isToday = (day === today.getDate() &&
+          calMonth === today.getMonth() &&
+          calYear === today.getFullYear());
+        d.className = 'day' + (isToday ? ' current' : '');
+        d.textContent = day;
+        grid.appendChild(d);
+      }
+    }
+
+    document.getElementById('calPrev').addEventListener('click', () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendar();
+    });
+
+    document.getElementById('calNext').addEventListener('click', () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendar();
+    });
+
+    initCalendar();
+  </script>
+</body>
+
+</html>
